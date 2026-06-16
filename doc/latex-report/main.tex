@@ -1,6 +1,6 @@
 \documentclass[12pt,a4paper]{article}
 
-% ── Packages ──────────────────────────────────────────────────────────────────
+% Packages
 \usepackage[a4paper,top=2.5cm,bottom=2.5cm,left=2.5cm,right=2.5cm]{geometry}
 \usepackage{graphicx}
 \usepackage{array}
@@ -13,22 +13,26 @@
 \usepackage{booktabs}
 \usepackage{amsmath}
 
-% ── Global settings ───────────────────────────────────────────────────────────
-\setstretch{1.15}
+% Global settings
+\setstretch{1.08}
+\setlength{\textfloatsep}{8pt plus 2pt minus 2pt}
+\setlength{\intextsep}{8pt plus 2pt minus 2pt}
+\setlength{\abovecaptionskip}{4pt}
+\setlength{\belowcaptionskip}{2pt}
 \graphicspath{{./}{resultImage/}{image/}}
 \newcommand{\sectionbreakguard}{\Needspace{8\baselineskip}}
 \newcommand{\subsectionbreakguard}{\Needspace{5\baselineskip}}
 
-% ── Centered column helper ────────────────────────────────────────────────────
+% Centered column helper
 \newcolumntype{C}[1]{>{\centering\arraybackslash}p{#1}}
 
-% ─────────────────────────────────────────────────────────────────────────────
+% Document
 \begin{document}
 
 \begin{titlepage}
 \centering
 
-% ── Logos ─────────────────────────────────────────────────────────────────────
+% Logos
 \begin{minipage}[c]{0.44\textwidth}
   \raggedright
   \includegraphics[width=3cm]{image/ITC_Tran_Logo.png}
@@ -43,7 +47,7 @@
 \noindent\rule{\linewidth}{0.8pt}
 \vspace{0.3cm}
 
-% ── Institution ───────────────────────────────────────────────────────────────
+% Institution
 {\Large\bfseries INSTITUTE OF TECHNOLOGY OF CAMBODIA\par}
 
 \vspace{0.25cm}
@@ -54,8 +58,8 @@
 \noindent\rule{\linewidth}{0.4pt}
 \vspace{1.2cm}
 
-% ── Course ────────────────────────────────────────────────────────────────────
-{\large\bfseries Introduction to Parallel and Distributed Systems\par}
+% Course
+{\large\bfseries Probabilistic Graphical Models\par}
 
 \vspace{0.3cm}
 
@@ -63,13 +67,13 @@
 
 \vspace{1.5cm}
 
-% ── Project title ─────────────────────────────────────────────────────────────
-{\LARGE\bfseries Project Name\par}
+% Project title
+{\LARGE\bfseries Building a Robust Part-of-Speech Tagger using Hidden Markov Model\par}
 
 \vspace{1.8cm}
 
-% ── Team table ────────────────────────────────────────────────────────────────
-{\large\bfseries Team X\par}
+% Team table
+{\large\bfseries Team 3\par}
 \vspace{0.5cm}
 
 \renewcommand{\arraystretch}{1.4}
@@ -83,7 +87,7 @@
 
 \vfill
 
-% ── Footer ────────────────────────────────────────────────────────────────────
+% Footer
 \noindent\rule{\linewidth}{0.4pt}\\[6pt]
 \begin{minipage}[t]{0.55\textwidth}
   \raggedright
@@ -101,8 +105,6 @@
 
 \end{titlepage}
 
-\clearpage
-\tableofcontents
 \clearpage
 
 \section{Abstract}
@@ -153,7 +155,7 @@ the training data is 45,153, and the number of POS tags is 12.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.78\textwidth]{Dataset-split-result.png}
+    \includegraphics[width=0.72\linewidth, trim=0 0 14pt 0, clip]{Dataset-split-result.png}
     \caption{Dataset split between training and testing sentences.}
     \label{fig:dataset-split}
 \end{figure}
@@ -264,7 +266,7 @@ correctly and 14,400 were tagged incorrectly.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.78\textwidth]{Final-accuracy-result-with-numbers-on-bars.png}
+    \includegraphics[width=0.72\linewidth, trim=0 0 13pt 0, clip]{Final-accuracy-result-with-numbers-on-bars.png}
     \caption{Word-level POS tagging result on the test set.}
     \label{fig:word-result}
 \end{figure}
@@ -280,14 +282,14 @@ evidence for their most likely tags.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.78\textwidth]{OOV-analysis-result-with-numbers-on-bars.png}
+    \includegraphics[width=0.72\linewidth, trim=0 0 13pt 0, clip]{OOV-analysis-result-with-numbers-on-bars.png}
     \caption{OOV word analysis on the test set.}
     \label{fig:oov-analysis}
 \end{figure}
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.82\textwidth]{Top-10-mistake-types-with-numbers-on-bars.png}
+    \includegraphics[width=0.78\linewidth]{Top-10-mistake-types-with-numbers-on-bars.png}
     \caption{Top 10 POS tagging mistake types.}
     \label{fig:top-mistakes}
 \end{figure}
@@ -301,8 +303,7 @@ noun, adjective, or verb depending on context. Similarly, ``offer'' can be a nou
 or a verb.
 
 Table~\ref{tab:error-examples} shows selected failed examples from the test
-sentences. These examples are written as a clean table rather than as a
-screenshot.
+sentences.
 
 \begin{table}[H]
     \centering
@@ -357,8 +358,6 @@ scratch. The main weaknesses are related to ambiguous words, limited context fro
 the first-order Markov assumption, and rare or unseen words. Future improvements
 could include using richer word features, suffix information, higher-order tag
 dependencies, or modern neural sequence models.
-
-\section{References}
 
 \begin{thebibliography}{9}
 
