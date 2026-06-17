@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>HMM POS Tagger Web Tool</title>
+    <link rel="stylesheet" href="static/style.css">
+  </head>
+  <body>
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Probabilistic Graphical Models</p>
+        <h1>HMM POS Tagger</h1>
+      </div>
+      <nav class="nav-links" aria-label="Page sections">
+        <a href="#tagger">Tagger</a>
+        <a href="#model">Model</a>
+        <a href="#results">Results</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="hero">
+        <div class="hero-copy">
+          <p class="eyebrow">Brown Corpus · Universal POS Tagset · Viterbi Decoding</p>
+          <h2>Interactive part-of-speech tagging with the project HMM model.</h2>
+          <p>
+            Enter an English sentence and the web tool will tokenize it, run the
+            trained first-order Hidden Markov Model in your browser, and display
+            each predicted universal POS tag with OOV status.
+          </p>
+        </div>
+        <div class="metric-strip" aria-label="Model summary metrics">
+          <div><strong>57,340</strong><span>Sentences</span></div>
+          <div><strong>45,153</strong><span>Vocabulary</span></div>
+          <div><strong>12</strong><span>POS Tags</span></div>
+          <div><strong>93.8%</strong><span>Reported Accuracy</span></div>
+        </div>
+      </section>
+
+      <section id="tagger" class="workspace">
+        <div class="tool-panel">
+          <div class="section-heading">
+            <p class="eyebrow">Try the Model</p>
+            <h2>Sentence Tagger</h2>
+          </div>
+          <form id="tag-form">
+            <label for="sentence">Input sentence</label>
+            <textarea id="sentence" name="sentence" rows="5">The student reads a book.</textarea>
+            <div class="actions">
+              <button type="submit">Tag Sentence</button>
+              <button type="button" id="sample-button" class="secondary">Use Sample</button>
+            </div>
+          </form>
+          <p id="message" class="message" role="status">Loading static model...</p>
+        </div>
+
+        <div class="results-panel" aria-live="polite">
+          <div class="section-heading">
+            <p class="eyebrow">Prediction Output</p>
+            <h2>Tagged Tokens</h2>
+          </div>
+          <div class="summary-row">
+            <span id="token-count">0 tokens</span>
+            <span id="oov-count">0 OOV</span>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Word</th>
+                  <th>Predicted Tag</th>
+                  <th>Status</th>
+                  <th>Emission Probability</th>
+                </tr>
+              </thead>
+              <tbody id="prediction-body">
+                <tr><td colspan="4" class="empty">Submit a sentence to see predictions.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section id="model" class="info-band">
+        <div class="section-heading">
+          <p class="eyebrow">How It Works</p>
+          <h2>Model Details</h2>
+        </div>
+        <div class="info-grid">
+          <article>
+            <h3>Training Data</h3>
+            <p>The app uses an exported model trained from the bundled Brown corpus files with an 80/20 split and seed 42.</p>
+          </article>
+          <article>
+            <h3>HMM Parameters</h3>
+            <p>Initial, transition, and emission probabilities are estimated from frequency counts. Emissions use Laplace smoothing with alpha 1.0.</p>
+          </article>
+          <article>
+            <h3>Decoder</h3>
+            <p>Viterbi decoding runs in log-space directly in JavaScript, so GitHub Pages can host the app without Python.</p>
+          </article>
+          <article>
+            <h3>Tagset</h3>
+            <p>The model predicts 12 universal tags: ., ADJ, ADP, ADV, CONJ, DET, NOUN, NUM, PRON, PRT, VERB, X.</p>
+          </article>
+        </div>
+      </section>
+
+      <section id="results" class="report-band">
+        <div class="section-heading">
+          <p class="eyebrow">Notebook Results</p>
+          <h2>Evaluation Summary</h2>
+        </div>
+        <div class="result-grid">
+          <figure>
+            <img src="report-image/Final-accuracy-result-with-numbers-on-bars.png" alt="Final accuracy result chart">
+            <figcaption>Word-level tagging accuracy from the report notebook.</figcaption>
+          </figure>
+          <figure>
+            <img src="report-image/OOV-analysis-result-with-numbers-on-bars.png" alt="OOV analysis chart">
+            <figcaption>Known versus out-of-vocabulary test words.</figcaption>
+          </figure>
+          <figure>
+            <img src="report-image/Top-10-mistake-types-with-numbers-on-bars.png" alt="Top POS mistake types chart">
+            <figcaption>Most frequent true-tag to predicted-tag mistakes.</figcaption>
+          </figure>
+        </div>
+      </section>
+    </main>
+
+    <script src="static/app.js"></script>
+  </body>
+</html>
