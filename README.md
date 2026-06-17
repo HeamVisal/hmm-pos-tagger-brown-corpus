@@ -1,4 +1,4 @@
-# HMM POS Tagger Mini Project
+# HMM POS Tagger Mini Project (Hidden Markov Network Part of Speech)
 
 This project implements a Part-of-Speech (POS) tagger from scratch using a first-order Hidden Markov Model (HMM). It trains and evaluates on the NLTK Brown Corpus with the universal POS tagset.
 
