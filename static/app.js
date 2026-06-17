@@ -15,7 +15,7 @@ const samples = [
 let sampleIndex = 0;
 
 function formatProbability(value) {
-  return Number(value).toExponential(3);
+  return `${(Number(value) * 100).toFixed(4)}%`;
 }
 
 function renderPredictions(data) {

@@ -2,6 +2,8 @@
 
 This project implements a Part-of-Speech (POS) tagger from scratch using a first-order Hidden Markov Model (HMM). It trains and evaluates on the NLTK Brown Corpus with the universal POS tagset.
 
+The project now also includes a Flask web tool for trying the trained HMM tagger on custom sentences and reviewing the model details, dataset statistics, and saved evaluation charts.
+
 The implementation covers:
 
 - Brown Corpus loading and reproducible train/test splitting
@@ -11,14 +13,20 @@ The implementation covers:
 - Word-level accuracy evaluation
 - Out-of-vocabulary (OOV) analysis
 - Error analysis for common POS tag mistakes
+- Interactive web-based POS tagging
 
 ## Project Structure
 
 ```text
 .
+|-- app.py                          # Flask web application
+|-- hmm_model.py                    # Reusable HMM model and Brown corpus loader
+|-- requirements.txt                # Web app dependency list
 |-- project1.ipynb                  # Main implementation notebook
 |-- project1-result-check.ipynb     # Notebook with final result/report-check cells
 |-- Miniproject_HMM_NLP.pdf         # Original project specification
+|-- static/                         # Web app CSS and JavaScript
+|-- templates/                      # Flask HTML templates
 |-- nltk_data/                      # Bundled Brown Corpus and universal tagset data
 `-- doc/
     `-- latex-report/
@@ -28,6 +36,18 @@ The implementation covers:
 ```
 
 ## Requirements
+
+### Web Application
+
+Use Python 3 with Flask:
+
+```bash
+pip install -r requirements.txt
+```
+
+The web app reads the bundled Brown corpus files directly from `nltk_data/`, so it does not require `nltk` at runtime.
+
+### Notebooks
 
 Use Python 3 with these packages:
 
@@ -50,6 +70,44 @@ export NLTK_DATA="$PWD/nltk_data"
 The notebooks also call `nltk.download("brown")` and `nltk.download("universal_tagset")`, so they can download the same data if internet access is available.
 
 ## How to Run
+
+### Run the Web Tool
+
+From the project root:
+
+```bash
+flask --app app run
+```
+
+Then open:
+
+```text
+http://127.0.0.1:5000
+```
+
+The web interface includes:
+
+- A sentence input box for custom POS tagging
+- Word-by-word predicted universal POS tags
+- Known/OOV status for each token
+- Emission probability shown for each predicted tag
+- Model details and reported notebook result charts
+
+The tagging API is also available at:
+
+```text
+POST /api/tag
+```
+
+Example request body:
+
+```json
+{
+  "text": "The student reads a book."
+}
+```
+
+### Run the Notebooks
 
 Start Jupyter from the project root:
 
@@ -126,14 +184,14 @@ Run `pdflatex` twice if references or figure placement need another pass.
 - The core implementation matches the assignment goal: it trains an HMM from frequency counts and decodes with Viterbi in log-space.
 - The split is reproducible because the notebook uses `random.seed(42)` before shuffling.
 - Emission probabilities are smoothed, but initial and transition probabilities are not smoothed. The decoder compensates with `EPSILON` before taking logs, but a cleaner model would smooth these distributions explicitly.
-- The notebooks are not packaged as reusable Python modules, so automated testing and command-line reruns are limited.
-- There is no `requirements.txt`; adding one would make setup more reliable.
+- The web app moves the reusable model logic into `hmm_model.py`, while the notebooks remain as the original implementation/report workflow.
+- `requirements.txt` currently contains the Flask dependency needed for the web tool.
 - The repository includes both zipped and extracted NLTK data, which improves offline use but increases repository size.
 
 ## Possible Improvements
 
-- Move reusable HMM code into a Python module such as `hmm_pos_tagger.py`.
-- Add `requirements.txt` or `pyproject.toml`.
+- Add a notebook-to-module synchronization workflow so future model changes do not need to be copied manually.
+- Add a production WSGI configuration for deployment.
 - Add transition and initial probability smoothing.
 - Add sentence-level accuracy and confusion-matrix reporting.
-- Add a simple CLI for tagging custom sentences without opening Jupyter.
+- Add a simple CLI for tagging custom sentences without opening Jupyter or Flask.
