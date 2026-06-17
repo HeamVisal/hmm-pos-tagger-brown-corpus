@@ -1,8 +1,11 @@
 # HMM POS Tagger Mini Project
 
-This project implements a Part-of-Speech (POS) tagger from scratch using a first-order Hidden Markov Model (HMM). It trains and evaluates on the NLTK Brown Corpus with the universal POS tagset.
+This project implements a Part-of-Speech (POS) tagger from scratch using a first-order Hidden Markov Model (HMM). It trains and evaluates on the Brown Corpus with the universal POS tagset.
 
-The project now also includes a Flask web tool for trying the trained HMM tagger on custom sentences and reviewing the model details, dataset statistics, and saved evaluation charts.
+The project includes two web interfaces:
+
+- `docs/`: a static GitHub Pages version that runs fully in the browser using an exported model JSON file.
+- `app.py`: a Flask version that trains/loads the model from the bundled Brown corpus files at server startup.
 
 The implementation covers:
 
@@ -19,13 +22,18 @@ The implementation covers:
 
 ```text
 .
+|-- docs/                           # Static GitHub Pages web app
+|   |-- index.html                  # Static web interface
+|   |-- model.json                  # Exported HMM model for browser use
+|   |-- static/                     # Static CSS and JavaScript decoder
+|   `-- report-image/               # Images used by the static web app
 |-- app.py                          # Flask web application
 |-- hmm_model.py                    # Reusable HMM model and Brown corpus loader
-|-- requirements.txt                # Web app dependency list
+|-- requirements.txt                # Flask app dependencies
 |-- project1.ipynb                  # Main implementation notebook
 |-- project1-result-check.ipynb     # Notebook with final result/report-check cells
 |-- Miniproject_HMM_NLP.pdf         # Original project specification
-|-- static/                         # Web app CSS and JavaScript
+|-- static/                         # Flask app CSS and JavaScript
 |-- templates/                      # Flask HTML templates
 |-- nltk_data/                      # Bundled Brown Corpus and universal tagset data
 `-- doc/
@@ -35,21 +43,84 @@ The implementation covers:
         `-- resultImage/            # Generated result figures
 ```
 
-## Requirements
+## Quick Start
 
-### Web Application
+### Run the GitHub Pages Version Locally
 
-Use Python 3 with Flask:
+Use this version when you want the same behavior as GitHub Pages. It does not need Flask, NLTK, or any Python packages.
+
+```bash
+cd docs
+python3 -m http.server 8000
+```
+
+Then open:
+
+```text
+http://127.0.0.1:8000
+```
+
+Stop the local server with `Ctrl + C`.
+
+Do not open `docs/index.html` by double-clicking it, because browsers may block loading `model.json` from the local filesystem. Use the local server command above.
+
+### Host on GitHub Pages
+
+The easiest public hosting option is the static app in `docs/`. It runs the HMM decoder in browser JavaScript and loads the exported model from `docs/model.json`, so GitHub Pages can host it without Flask or Python.
+
+After pushing the `docs/` folder to GitHub:
+
+1. Open your GitHub repository.
+2. Go to **Settings** > **Pages**.
+3. Under **Build and deployment**, choose **Deploy from a branch**.
+4. Select your main branch and the `/docs` folder.
+5. Click **Save**.
+
+GitHub will publish the site at a URL like:
+
+```text
+https://YOUR_USERNAME.github.io/YOUR_REPO/
+```
+
+## Optional Flask Web App
+
+The Flask version is useful if you want a Python server and `/api/tag` endpoint. It reads the bundled Brown corpus files directly from `nltk_data/`, so it does not require `nltk` at runtime.
+
+Install dependencies:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-The web app reads the bundled Brown corpus files directly from `nltk_data/`, so it does not require `nltk` at runtime.
+Run the Flask app from the project root:
 
-### Notebooks
+```bash
+flask --app app run
+```
 
-Use Python 3 with these packages:
+Then open:
+
+```text
+http://127.0.0.1:5000
+```
+
+The tagging API is available at:
+
+```text
+POST /api/tag
+```
+
+Example request body:
+
+```json
+{
+  "text": "The student reads a book."
+}
+```
+
+## Notebook Requirements
+
+Use Python 3 with these packages for the notebooks:
 
 - `nltk`
 - `jupyter`
@@ -69,45 +140,7 @@ export NLTK_DATA="$PWD/nltk_data"
 
 The notebooks also call `nltk.download("brown")` and `nltk.download("universal_tagset")`, so they can download the same data if internet access is available.
 
-## How to Run
-
-### Run the Web Tool
-
-From the project root:
-
-```bash
-flask --app app run
-```
-
-Then open:
-
-```text
-http://127.0.0.1:5000
-```
-
-The web interface includes:
-
-- A sentence input box for custom POS tagging
-- Word-by-word predicted universal POS tags
-- Known/OOV status for each token
-- Emission probability shown for each predicted tag
-- Model details and reported notebook result charts
-
-The tagging API is also available at:
-
-```text
-POST /api/tag
-```
-
-Example request body:
-
-```json
-{
-  "text": "The student reads a book."
-}
-```
-
-### Run the Notebooks
+## Run the Notebooks
 
 Start Jupyter from the project root:
 
@@ -184,14 +217,13 @@ Run `pdflatex` twice if references or figure placement need another pass.
 - The core implementation matches the assignment goal: it trains an HMM from frequency counts and decodes with Viterbi in log-space.
 - The split is reproducible because the notebook uses `random.seed(42)` before shuffling.
 - Emission probabilities are smoothed, but initial and transition probabilities are not smoothed. The decoder compensates with `EPSILON` before taking logs, but a cleaner model would smooth these distributions explicitly.
-- The web app moves the reusable model logic into `hmm_model.py`, while the notebooks remain as the original implementation/report workflow.
-- `requirements.txt` currently contains the Flask dependency needed for the web tool.
+- The static app in `docs/` is the recommended hosting path for GitHub Pages.
+- The Flask app keeps reusable Python model logic in `hmm_model.py` for server-side use.
 - The repository includes both zipped and extracted NLTK data, which improves offline use but increases repository size.
 
 ## Possible Improvements
 
-- Add a notebook-to-module synchronization workflow so future model changes do not need to be copied manually.
-- Add a production WSGI configuration for deployment.
+- Add a script to regenerate `docs/model.json` whenever the Python model changes.
 - Add transition and initial probability smoothing.
 - Add sentence-level accuracy and confusion-matrix reporting.
 - Add a simple CLI for tagging custom sentences without opening Jupyter or Flask.
