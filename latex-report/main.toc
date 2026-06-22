@@ -1,0 +1,13 @@
+\contentsline {section}{\numberline {1}Abstract}{1}{section.1}%
+\contentsline {section}{\numberline {2}Introduction}{1}{section.2}%
+\contentsline {section}{\numberline {3}Methodology}{1}{section.3}%
+\contentsline {subsection}{\numberline {3.1}Dataset and Tagset}{1}{subsection.3.1}%
+\contentsline {subsection}{\numberline {3.2}Hidden Markov Model}{1}{subsection.3.2}%
+\contentsline {subsection}{\numberline {3.3}Parameter Estimation}{2}{subsection.3.3}%
+\contentsline {subsection}{\numberline {3.4}Decoding with Viterbi Algorithm}{2}{subsection.3.4}%
+\contentsline {section}{\numberline {4}Results and Evaluation}{3}{section.4}%
+\contentsline {subsection}{\numberline {4.1}Evaluation Metric}{3}{subsection.4.1}%
+\contentsline {subsection}{\numberline {4.2}Final Evaluation Summary}{3}{subsection.4.2}%
+\contentsline {subsection}{\numberline {4.3}OOV Analysis}{3}{subsection.4.3}%
+\contentsline {section}{\numberline {5}Error Analysis}{4}{section.5}%
+\contentsline {section}{\numberline {6}Conclusion}{4}{section.6}%

@@ -517,12 +517,17 @@ remainder is spread across less frequent confusion types.
     \label{tab:error-examples}
 \end{table*}
 
-The HMM uses the first-order Markov assumption. This means that the current tag
-mainly depends on the previous tag, not on the full meaning of the sentence.
-Because of this, the model may fail when the correct tag requires longer context
-or semantic understanding. For example, deciding whether ``offer'' is a noun or a
-verb may require understanding its role in the sentence, not only the previous
-tag.
+These failures directly reflect the first-order Markov assumption, under which
+each tag depends only on the preceding tag rather than the full sentence context.
+In ``With tips, the girls average\ldots'', ``average'' is ambiguous among NOUN,
+ADJ, and VERB. Local tag transitions favored NOUN, and that wrong path also
+affected nearby predictions such as ``\$200'' and ``depending.'' The words ``tempting'' and ``offer'' in ``It was a very tempting offer.''
+are lexically ambiguous.
+Relying only on local transition and emission probabilities, the HMM selected an
+incorrect sequence without understanding the sentence meaning. Finally, in ``He
+saw the surprise\ldots laughed as though\ldots'', ``as'' can be ADP or ADV.
+Recognizing the construction ``as though'' requires longer context than this
+first-order HMM represents.
 
 Rare words and unseen words are also challenging. Laplace smoothing helps by
 preventing zero probabilities, but it cannot fully replace real evidence from
