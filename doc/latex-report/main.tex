@@ -7,12 +7,16 @@
 \usepackage{float}
 \usepackage{setspace}
 \usepackage{longtable}
+\usepackage{xurl}
 \usepackage[hidelinks]{hyperref}
 \usepackage{caption}
 \usepackage{needspace}
 \usepackage{booktabs}
 \usepackage{amsmath}
 \usepackage{microtype}
+\usepackage{titlesec}
+\usepackage{flushend}
+\DeclareCaptionFont{reportcaption}{\fontsize{9.5}{11}\selectfont}
 
 % Global settings
 \setstretch{1.08}
@@ -22,9 +26,10 @@
 \setlength{\belowcaptionskip}{2pt}
 \setlength{\columnsep}{0.7cm}
 \setlength{\emergencystretch}{1.5em}
+\setlength{\Urlmuskip}{0mu plus 1mu}
 \graphicspath{{./}{resultImage/}{image/}}
 \newcommand{\sectionbreakguard}{\Needspace{8\baselineskip}}
-\newcommand{\subsectionbreakguard}{\Needspace{5\baselineskip}}
+\newcommand{\subsectionbreakguard}{\Needspace{7\baselineskip}}
 
 % Centered column helper
 \newcolumntype{C}[1]{>{\centering\arraybackslash}p{#1}}
@@ -80,6 +85,8 @@
 {\large\bfseries Team 3\par}
 \vspace{0.5cm}
 
+\begin{minipage}{13.6cm}
+\centering
 \renewcommand{\arraystretch}{1.4}
 \begin{tabular}{>{\raggedright\arraybackslash}p{6.5cm} C{3.8cm} C{2cm}}
   \toprule
@@ -91,16 +98,16 @@
   4.\enspace CHIV Mengchou     & e20221028           & \dots \\
   \bottomrule
 \end{tabular}
+\end{minipage}
 
 \vfill
 
 % Footer
 \noindent\rule{\linewidth}{0.4pt}\\[6pt]
-\begin{minipage}[t]{0.55\textwidth}
+\begin{minipage}[t]{13.6cm}
   \raggedright
   \begin{tabular}{@{}l@{\enspace}l@{}}
     \textbf{Lecturer:} & Mr. PHOK Ponna \\
-                       & Mr. PHOK Ponna \\
   \end{tabular}
 \end{minipage}
 
@@ -113,8 +120,25 @@
 \tableofcontents
 \clearpage
 \pagenumbering{arabic}
+
+% Compact two-column report style (applied only after the contents page)
+\newgeometry{top=1.8cm,bottom=1.8cm,left=1.8cm,right=1.8cm}
+\setlength{\columnsep}{0.82cm}
+\setstretch{1.0}
+\fontsize{11}{13}\selectfont
+\captionsetup{font=reportcaption,skip=3pt}
+\titleformat{\section}{\sffamily\bfseries\fontsize{12}{13.5}\selectfont}{\thesection}{0.55em}{\MakeUppercase}
+\titleformat{name=\section,numberless}{\sffamily\bfseries\fontsize{12}{13.5}\selectfont}{}{0pt}{\MakeUppercase}
+\titleformat{\subsection}{\sffamily\bfseries\fontsize{11}{13}\selectfont}{\thesubsection}{0.55em}{}
+\titlespacing*{\section}{0pt}{1.25ex plus 0.4ex minus 0.2ex}{0.55ex}
+\titlespacing*{\subsection}{0pt}{1.0ex plus 0.3ex minus 0.2ex}{0.4ex}
+\setlength{\textfloatsep}{7pt plus 2pt minus 2pt}
+\setlength{\dbltextfloatsep}{5.5pt plus 2pt minus 1.5pt}
+\setlength{\floatsep}{6pt plus 2pt minus 2pt}
+\setlength{\intextsep}{6pt plus 2pt minus 2pt}
 \twocolumn
 
+\sectionbreakguard
 \section{Abstract}
 
 This report presents a Part-of-Speech (POS) tagger based on a Hidden Markov Model
@@ -133,6 +157,7 @@ concentrated around lexical ambiguity, sparse training evidence, and unseen
 words, which are limitations expected from the model assumptions and the chosen
 emission representation.
 
+\sectionbreakguard
 \section{Introduction}
 
 Part-of-Speech tagging is a basic task in Natural Language Processing (NLP). It
@@ -167,8 +192,10 @@ At the same time, the model deliberately uses limited context. Evaluating it
 therefore shows both how much can be learned from first-order dependencies and
 where richer lexical or contextual information would be needed.
 
+\sectionbreakguard
 \section{Methodology}
 
+\subsectionbreakguard
 \subsection{Dataset and Tagset}
 
 The dataset used in this project is the Brown Corpus provided by NLTK. The
@@ -185,13 +212,14 @@ the model's ability to reproduce the observations from which its probabilities
 were calculated. Words are normalized to lowercase for vocabulary lookup and
 emission counting, so capitalization variants share the same lexical evidence.
 
-\begin{figure}[H]
+\begin{figure}[!htbp]
     \centering
     \includegraphics[width=0.98\linewidth, trim=0 0 14pt 0, clip]{resultImage/Dataset-split-result.png}
     \caption{Dataset split between training and testing sentences.}
     \label{fig:dataset-split}
 \end{figure}
 
+\subsectionbreakguard
 \subsection{Hidden Markov Model}
 
 The POS tagging problem is modeled as a sequence prediction problem. Given a
@@ -225,6 +253,7 @@ observations and the POS labels are hidden states that must be inferred jointly.
 This separation between observed words and latent test-time states is the reason
 the tagging task fits the HMM formulation.
 
+\subsectionbreakguard
 \subsection{Parameter Estimation}
 
 The model parameters were estimated using Maximum Likelihood Estimation based on
@@ -248,12 +277,19 @@ Laplace smoothing was used to reduce zero-probability problems:
 
 \begin{equation}
 B(t,w) = \frac{\text{Count}(w \text{ emitted by } t) + \alpha}
-{\text{Count}(t) + \alpha |V|}
+{\text{Count}(t) + \alpha (|V| + 1)}
 \end{equation}
 
-In this project, $\alpha = 1.0$. A special
-\texttt{\textless OOV\textgreater} token was used for unseen words. During
-testing, words not found in the training vocabulary were treated as OOV words.
+Here, $V$ is defined as the set of distinct normalized words observed in the
+training data; it excludes the special \texttt{\textless OOV\textgreater}
+token. The additional 1 in $|V|+1$ accounts for that OOV outcome. In this
+project, $\alpha = 1.0$. During testing, words not found in $V$ were mapped to
+the OOV token. Its emission probability for tag $t$ is therefore
+
+\begin{equation}
+B(t,\text{OOV}) = \frac{\alpha}
+{\text{Count}(t) + \alpha (|V| + 1)}.
+\end{equation}
 
 The three estimates summarize different count tables. Initial counts are
 collected only from the first token of each training sentence. Transition counts
@@ -262,8 +298,8 @@ do not create artificial transitions. Emission counts are collected from
 normalized word--tag pairs. Dividing each count by its appropriate total turns
 the table into a conditional probability distribution.
 
-Laplace smoothing is applied to emissions, including the additional OOV
-outcome in the emission vocabulary represented by $|V|$. It gives every
+Laplace smoothing is applied to emissions over the $|V|$ observed training
+words plus the one additional OOV outcome. It gives every
 word--tag combination a non-zero probability, while combinations observed many
 times still receive greater probability mass. The initial and transition
 distributions are estimated without Laplace smoothing in this implementation.
@@ -272,19 +308,47 @@ that a zero estimate does not cause an undefined computation. This numerical
 safeguard should not be confused with re-estimating those distributions with
 smoothing.
 
+\subsectionbreakguard
 \subsection{Decoding with Viterbi Algorithm}
 
 After estimating the HMM parameters, the Viterbi algorithm was used to find the
 best tag sequence for each test sentence. The algorithm uses dynamic programming
 to avoid checking all possible tag sequences directly. Since multiplying many
 small probabilities can cause computational underflow, the implementation uses
-log-space. The recurrence is:
+log-space. For a candidate tag $j$, initialization combines the sentence-start
+and first-word probabilities:
+
+\begin{equation}
+\log v_1(j) = \log \pi(j) + \log B(j,w_1).
+\end{equation}
+
+For positions $t=2,\ldots,n$, the recurrence keeps the best score ending in
+$j$:
 
 \begin{equation}
 \begin{aligned}
 \log v_t(j) ={} &\max_i \left[\log v_{t-1}(i)
                     + \log A(i,j)\right] \\
-                  &+ \log B(j,w_t)
+                  &+ \log B(j,w_t).
+\end{aligned}
+\end{equation}
+
+At the same time, the backpointer records which previous tag attained that
+maximum:
+
+\begin{equation}
+\psi_t(j) = \underset{i}{\arg\max}\,
+\left[\log v_{t-1}(i) + \log A(i,j)\right].
+\end{equation}
+
+The best final tag is selected from the last Viterbi column, after which the
+stored backpointers reconstruct the path in reverse:
+
+\begin{equation}
+\begin{aligned}
+\hat{t}_n &= \underset{j}{\arg\max}\,\log v_n(j), \\
+\hat{t}_{t-1} &= \psi_t(\hat{t}_t),
+\quad t=n,n-1,\ldots,2.
 \end{aligned}
 \end{equation}
 
@@ -305,8 +369,10 @@ maximum-probability path as direct multiplication, subject to numerical
 precision, but avoids the rapid underflow caused by multiplying many values
 smaller than one.
 
+\sectionbreakguard
 \section{Results and Evaluation}
 
+\subsectionbreakguard
 \subsection{Evaluation Metric}
 
 The model was evaluated using word-level accuracy. Accuracy measures the
@@ -325,6 +391,7 @@ words. The subsequent counts and error analysis provide that additional context.
 \frac{\text{Correctly tagged words}}{\text{Total test words}}
 \end{equation}
 
+\subsectionbreakguard
 \subsection{Final Evaluation Summary}
 
 Table~\ref{tab:summary} shows the final evaluation summary. The model achieved
@@ -338,11 +405,9 @@ training and testing sentence counts also agree with the dataset split in
 Figure~\ref{fig:dataset-split}; they are included here to make the experimental
 scale visible beside the final score.
 
-\begin{table}[H]
+\begin{table}[!htbp]
     \centering
-    \caption{Final Evaluation Summary}
-    \label{tab:summary}
-    \small
+    \fontsize{9.5}{11}\selectfont
     \begin{tabular}{@{}lr@{}}
         \toprule
         \textbf{Metric} & \textbf{Value} \\
@@ -359,15 +424,18 @@ scale visible beside the final score.
         OOV rate & 2.18\% \\
         \bottomrule
     \end{tabular}
+    \caption{Final Evaluation Summary}
+    \label{tab:summary}
 \end{table}
 
-\begin{figure}[H]
+\begin{figure}[!htbp]
     \centering
-    \includegraphics[width=0.98\linewidth, trim=0 0 13pt 0, clip]{resultImage/Final-accuracy-result-with-numbers-on-bars.png}
+    \includegraphics[width=\linewidth, trim=0 0 13pt 0, clip]{resultImage/Final-accuracy-result-with-numbers-on-bars.png}
     \caption{Word-level POS tagging result on the test set.}
     \label{fig:word-result}
 \end{figure}
 
+\subsectionbreakguard
 \subsection{OOV Analysis}
 
 The test set contains 5,050 OOV words, giving an OOV rate of 2.18\%. OOV words
@@ -390,20 +458,21 @@ identifies the word directly. Smoothing keeps decoding possible, but it does not
 use spelling, prefixes, suffixes, or other morphological cues that might
 separate likely nouns, verbs, and adjectives.
 
-\begin{figure}[H]
+\begin{figure}[!htbp]
     \centering
-    \includegraphics[width=0.98\linewidth, trim=0 0 13pt 0, clip]{resultImage/OOV-analysis-result-with-numbers-on-bars.png}
+    \includegraphics[width=0.95\columnwidth, trim=0 0 13pt 0, clip]{resultImage/OOV-analysis-result-with-numbers-on-bars.png}
     \caption{OOV word analysis on the test set.}
     \label{fig:oov-analysis}
 \end{figure}
 
-\begin{figure*}[t]
+\begin{figure*}[!t]
     \centering
     \includegraphics[width=0.78\textwidth]{resultImage/Top-10-mistake-types-with-numbers-on-bars.png}
     \caption{Top 10 POS tagging mistake types.}
     \label{fig:top-mistakes}
 \end{figure*}
 
+\sectionbreakguard
 \section{Error Analysis}
 
 The model made 14,400 word-level mistakes on the test set. Many mistakes happen
@@ -423,11 +492,9 @@ different error category from VERB predicted as NOUN. Together, the ten displaye
 categories contain 7,730 of the 14,400 wrong predictions, so a substantial
 remainder is spread across less frequent confusion types.
 
-\begin{table*}[t]
+\begin{table*}[!t]
     \centering
-    \caption{Error Analysis Examples}
-    \label{tab:error-examples}
-    \footnotesize
+    \fontsize{9.5}{11}\selectfont
     \begin{tabular}{p{0.40\textwidth}p{0.14\textwidth}p{0.14\textwidth}p{0.20\textwidth}}
         \toprule
         \textbf{Sentence} & \textbf{Word} & \textbf{True Tag} & \textbf{Predicted Tag} \\
@@ -446,6 +513,8 @@ remainder is spread across less frequent confusion types.
         & as & ADP & ADV \\
         \bottomrule
     \end{tabular}
+    \caption{Error Analysis Examples}
+    \label{tab:error-examples}
 \end{table*}
 
 The HMM uses the first-order Markov assumption. This means that the current tag
@@ -467,6 +536,7 @@ Table~\ref{tab:error-examples} should be read as outcomes of sequence decoding,
 not as independent word classifications. The table is illustrative; the overall
 counts and top mistake types summarize the complete test set.
 
+\sectionbreakguard
 \section{Conclusion}
 
 This project implemented a POS tagger using a Hidden Markov Model trained on the
@@ -500,6 +570,9 @@ contextual representations. Such extensions add complexity, so the current HMM
 remains useful as a transparent reference model whose probabilities, decoding
 steps, and error counts can be inspected directly.
 
+\sectionbreakguard
+\begingroup
+\fontsize{10}{12}\selectfont
 \begin{thebibliography}{9}
 
 \bibitem{nltkbook}
@@ -529,5 +602,6 @@ recognition.
 DOI: \url{https://doi.org/10.1109/5.18626}.
 
 \end{thebibliography}
+\endgroup
 
 \end{document}
