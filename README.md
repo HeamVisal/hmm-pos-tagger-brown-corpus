@@ -1,11 +1,11 @@
-# HMM POS Tagger Mini Project (Hidden Markov Network Part of Speech)
+# HMM POS Tagger for the Brown Corpus
 
 This project implements a Part-of-Speech (POS) tagger from scratch using a first-order Hidden Markov Model (HMM). It trains and evaluates on the Brown Corpus with the universal POS tagset.
 
 The project includes two web interfaces:
 
 - `docs/`: a static GitHub Pages version that runs fully in the browser using an exported model JSON file.
-- `app.py`: a Flask version that trains/loads the model from the bundled Brown corpus files at server startup.
+- `app.py`: a Flask version that trains the model from the bundled Brown corpus files on the first request.
 
 The implementation covers:
 
@@ -33,14 +33,15 @@ The implementation covers:
 |-- project1.ipynb                  # Main implementation notebook
 |-- project1-result-check.ipynb     # Notebook with final result/report-check cells
 |-- Miniproject_HMM_NLP.pdf         # Original project specification
+|-- Project1-Report.pdf             # Final project report
+|-- PresentationSlide.pdf           # Final presentation slides
 |-- static/                         # Flask app CSS and JavaScript
 |-- templates/                      # Flask HTML templates
 |-- nltk_data/                      # Bundled Brown Corpus and universal tagset data
-`-- doc/
-    `-- latex-report/
-        |-- main.tex                # LaTeX project report
-        |-- image/                  # Report logo/image assets
-        `-- resultImage/            # Generated result figures
+`-- latex-report/
+    |-- main.tex                    # LaTeX source for the project report
+    |-- image/                      # Report logo/image assets
+    `-- resultImage/                # Generated result figures
 ```
 
 ## Quick Start
@@ -84,11 +85,13 @@ https://YOUR_USERNAME.github.io/YOUR_REPO/
 
 ## Optional Flask Web App
 
-The Flask version is useful if you want a Python server and `/api/tag` endpoint. It reads the bundled Brown corpus files directly from `nltk_data/`, so it does not require `nltk` at runtime.
+The Flask version is useful when you want a Python server and a JSON API. It reads the bundled Brown corpus files directly from `nltk_data/`, so it does not require `nltk` at runtime. The model is trained once when the first page or API request is handled and then cached for later requests.
 
-Install dependencies:
+Create a virtual environment and install the dependencies:
 
 ```bash
+python3 -m venv .venv
+source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
@@ -117,6 +120,16 @@ Example request body:
   "text": "The student reads a book."
 }
 ```
+
+Example request:
+
+```bash
+curl -X POST http://127.0.0.1:5000/api/tag \
+  -H 'Content-Type: application/json' \
+  -d '{"text":"The student reads a book."}'
+```
+
+The response contains a `tokens` array plus `token_count` and `oov_count`. Each token includes its original text, predicted universal tag, known/OOV status, and smoothed emission probability. Empty input returns HTTP `400`.
 
 ## Notebook Requirements
 
@@ -199,14 +212,14 @@ Most common saved mistake types:
 | ADJ | NOUN | 558 |
 | VERB | ADJ | 551 |
 
-## Report
+## Reports and Slides
 
-The LaTeX report is in `doc/latex-report/main.tex`, with generated result images in `doc/latex-report/resultImage/`.
+The final report is available as `Project1-Report.pdf`, and the presentation is available as `PresentationSlide.pdf`. The editable LaTeX report source is in `latex-report/main.tex`, with generated result images in `latex-report/resultImage/`.
 
 To build the report from the LaTeX directory:
 
 ```bash
-cd doc/latex-report
+cd latex-report
 pdflatex main.tex
 ```
 
@@ -219,6 +232,7 @@ Run `pdflatex` twice if references or figure placement need another pass.
 - Emission probabilities are smoothed, but initial and transition probabilities are not smoothed. The decoder compensates with `EPSILON` before taking logs, but a cleaner model would smooth these distributions explicitly.
 - The static app in `docs/` is the recommended hosting path for GitHub Pages.
 - The Flask app keeps reusable Python model logic in `hmm_model.py` for server-side use.
+- The Flask app currently points its report-image route at `doc/latex-report/resultImage/`, while the tracked directory is `latex-report/resultImage/`; tagging still works, but the report charts return 404 until that path is corrected in `app.py`.
 - The repository includes both zipped and extracted NLTK data, which improves offline use but increases repository size.
 
 ## Possible Improvements
@@ -227,3 +241,4 @@ Run `pdflatex` twice if references or figure placement need another pass.
 - Add transition and initial probability smoothing.
 - Add sentence-level accuracy and confusion-matrix reporting.
 - Add a simple CLI for tagging custom sentences without opening Jupyter or Flask.
+- Add automated tests for corpus loading, tokenization, Viterbi output, and the Flask API.
