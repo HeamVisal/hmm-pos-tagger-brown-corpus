@@ -12,6 +12,7 @@
 \usepackage{needspace}
 \usepackage{booktabs}
 \usepackage{amsmath}
+\usepackage{microtype}
 
 % Global settings
 \setstretch{1.08}
@@ -19,6 +20,8 @@
 \setlength{\intextsep}{8pt plus 2pt minus 2pt}
 \setlength{\abovecaptionskip}{4pt}
 \setlength{\belowcaptionskip}{2pt}
+\setlength{\columnsep}{0.7cm}
+\setlength{\emergencystretch}{1.5em}
 \graphicspath{{./}{resultImage/}{image/}}
 \newcommand{\sectionbreakguard}{\Needspace{8\baselineskip}}
 \newcommand{\subsectionbreakguard}{\Needspace{5\baselineskip}}
@@ -28,6 +31,7 @@
 
 % Document
 \begin{document}
+\hypersetup{pageanchor=false}
 
 \begin{titlepage}
 \centering
@@ -103,11 +107,13 @@
 \end{titlepage}
 
 \clearpage
+\hypersetup{pageanchor=true}
 
 \pagenumbering{roman}
 \tableofcontents
 \clearpage
 \pagenumbering{arabic}
+\twocolumn
 
 \section{Abstract}
 
@@ -121,9 +127,11 @@ unseen words, Laplace smoothing with $\alpha = 1.0$ and a special
 \texttt{\textless OOV\textgreater} token were used. The Viterbi algorithm was
 implemented in log-space to avoid numerical underflow. On the test set, the model
 tagged 217,777 out of 232,177 words correctly, giving an accuracy of 93.8\%.
-The results show that a simple statistical sequence model can achieve strong
-performance for POS tagging, although errors remain for ambiguous and unseen
-words.
+The results show that a compact statistical sequence model can recover most tag
+assignments from local sequential regularities. The remaining errors are
+concentrated around lexical ambiguity, sparse training evidence, and unseen
+words, which are limitations expected from the model assumptions and the chosen
+emission representation.
 
 \section{Introduction}
 
@@ -145,6 +153,20 @@ tags. This makes the task simpler and allows the model to focus on common
 grammatical categories. The main objective is to train the HMM from the training
 sentences and use it to predict POS tags for unseen test sentences.
 
+The work follows a complete supervised sequence-labeling pipeline. Tagged
+sentences provide the counts needed to estimate the model, a held-out portion of
+the corpus measures generalization, and Viterbi decoding converts the learned
+probabilities into one globally consistent tag sequence per sentence. This is
+important because selecting the most frequent tag for each word independently
+would ignore the way grammatical categories tend to follow one another.
+
+The HMM also provides an interpretable baseline. Its initial, transition, and
+emission components have direct probabilistic meanings, so a prediction can be
+related to sentence-start patterns, neighboring tags, and word--tag evidence.
+At the same time, the model deliberately uses limited context. Evaluating it
+therefore shows both how much can be learned from first-order dependencies and
+where richer lexical or contextual information would be needed.
+
 \section{Methodology}
 
 \subsection{Dataset and Tagset}
@@ -155,9 +177,17 @@ corpus was loaded with the universal POS tagset. In total, the dataset contains
 11,468 testing sentences, following an 80\%--20\% split. The vocabulary size in
 the training data is 45,153, and the number of POS tags is 12.
 
+The sentence list was shuffled with random seed 42 before the split, making the
+experiment reproducible while keeping complete sentences together. No test
+sentence contributes counts to parameter estimation. This separation matters:
+the reported accuracy measures predictions on held-out sentences rather than
+the model's ability to reproduce the observations from which its probabilities
+were calculated. Words are normalized to lowercase for vocabulary lookup and
+emission counting, so capitalization variants share the same lexical evidence.
+
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.72\linewidth, trim=0 0 14pt 0, clip]{resultImage/Dataset-split-result.png}
+    \includegraphics[width=0.98\linewidth, trim=0 0 14pt 0, clip]{resultImage/Dataset-split-result.png}
     \caption{Dataset split between training and testing sentences.}
     \label{fig:dataset-split}
 \end{figure}
@@ -170,14 +200,30 @@ $t_1, t_2, \ldots, t_n$. The HMM represents the joint probability of the tag and
 word sequence as:
 
 \begin{equation}
-P(t_1, \ldots, t_n, w_1, \ldots, w_n)
-= \pi(t_1) B_{t_1}(w_1)
+\begin{aligned}
+&P(t_1, \ldots, t_n, w_1, \ldots, w_n) \\
+&= \pi(t_1) B_{t_1}(w_1)
 \prod_{i=2}^{n} A_{t_{i-1},t_i} B_{t_i}(w_i)
+\end{aligned}
 \end{equation}
 
 In this formula, $\pi$ is the initial probability, $A$ is the transition
 probability matrix, and $B$ is the emission probability matrix. These parameters
 are estimated from the training data.
+
+The factorization makes two simplifying assumptions. First, the tag at position
+$i$ is conditioned on the tag at position $i-1$ rather than on the entire tag
+history. Second, once the current tag is known, the observed word is treated as
+independent of the other words and tags. Under these assumptions, $\pi(t_1)$
+scores a possible sentence opening, each $A_{t_{i-1},t_i}$ scores a local tag
+change, and each $B_{t_i}(w_i)$ scores the compatibility of a word with its tag.
+Multiplying the factors assigns a score to a complete word--tag sequence.
+
+Although the hidden tags are available during supervised training, they are not
+available when a new sentence is decoded. At prediction time the words are the
+observations and the POS labels are hidden states that must be inferred jointly.
+This separation between observed words and latent test-time states is the reason
+the tagging task fits the HMM formulation.
 
 \subsection{Parameter Estimation}
 
@@ -209,6 +255,23 @@ In this project, $\alpha = 1.0$. A special
 \texttt{\textless OOV\textgreater} token was used for unseen words. During
 testing, words not found in the training vocabulary were treated as OOV words.
 
+The three estimates summarize different count tables. Initial counts are
+collected only from the first token of each training sentence. Transition counts
+are collected from adjacent tag pairs within a sentence, so sentence boundaries
+do not create artificial transitions. Emission counts are collected from
+normalized word--tag pairs. Dividing each count by its appropriate total turns
+the table into a conditional probability distribution.
+
+Laplace smoothing is applied to emissions, including the additional OOV
+outcome in the emission vocabulary represented by $|V|$. It gives every
+word--tag combination a non-zero probability, while combinations observed many
+times still receive greater probability mass. The initial and transition
+distributions are estimated without Laplace smoothing in this implementation.
+When decoding, a small numerical constant is added before taking logarithms so
+that a zero estimate does not cause an undefined computation. This numerical
+safeguard should not be confused with re-estimating those distributions with
+smoothing.
+
 \subsection{Decoding with Viterbi Algorithm}
 
 After estimating the HMM parameters, the Viterbi algorithm was used to find the
@@ -218,13 +281,29 @@ small probabilities can cause computational underflow, the implementation uses
 log-space. The recurrence is:
 
 \begin{equation}
-\log v_t(j) =
-\max_i \left[\log v_{t-1}(i) + \log A(i,j)\right]
-+ \log B(j,w_t)
+\begin{aligned}
+\log v_t(j) ={} &\max_i \left[\log v_{t-1}(i)
+                    + \log A(i,j)\right] \\
+                  &+ \log B(j,w_t)
+\end{aligned}
 \end{equation}
 
 The model stores the best previous tag for each current tag and then performs
 backtracking to recover the predicted tag sequence.
+
+Initialization combines the initial probability of each possible first tag with
+the first word's emission probability. For every later position, the recurrence
+examines all previous tags and retains only the highest-scoring path ending in
+each current tag. After the final word, the best final state is selected and the
+stored backpointers are followed in reverse. With $n$ words and $T$ tags, this
+requires $O(nT^2)$ score comparisons instead of enumerating $T^n$ complete tag
+sequences.
+
+Log-space changes products into sums and preserves the ordering of path
+probabilities because the logarithm is monotonic. It therefore produces the same
+maximum-probability path as direct multiplication, subject to numerical
+precision, but avoids the rapid underflow caused by multiplying many values
+smaller than one.
 
 \section{Results and Evaluation}
 
@@ -232,6 +311,14 @@ backtracking to recover the predicted tag sequence.
 
 The model was evaluated using word-level accuracy. Accuracy measures the
 proportion of test words whose predicted POS tag is equal to the true POS tag:
+
+The evaluation iterates through every token in the 11,468 held-out sentences.
+Each prediction is compared at the same sentence position with its corpus tag;
+correct comparisons are summed and divided by the total number of test tokens.
+This micro-averaged measure gives every word equal weight, regardless of its
+sentence length or tag frequency. It is easy to interpret, but it does not show
+whether performance is distributed uniformly across tags, known words, and OOV
+words. The subsequent counts and error analysis provide that additional context.
 
 \begin{equation}
 \text{Accuracy} =
@@ -244,11 +331,19 @@ Table~\ref{tab:summary} shows the final evaluation summary. The model achieved
 93.8\% accuracy on 232,177 test words. Out of these words, 217,777 were tagged
 correctly and 14,400 were tagged incorrectly.
 
+The displayed percentage is rounded: the underlying evaluation counts are the
+primary result and satisfy $217{,}777 + 14{,}400 = 232{,}177$. Thus, the summary
+table and bar chart report the same evaluation from complementary views. The
+training and testing sentence counts also agree with the dataset split in
+Figure~\ref{fig:dataset-split}; they are included here to make the experimental
+scale visible beside the final score.
+
 \begin{table}[H]
     \centering
     \caption{Final Evaluation Summary}
     \label{tab:summary}
-    \begin{tabular}{lr}
+    \small
+    \begin{tabular}{@{}lr@{}}
         \toprule
         \textbf{Metric} & \textbf{Value} \\
         \midrule
@@ -268,7 +363,7 @@ correctly and 14,400 were tagged incorrectly.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.72\linewidth, trim=0 0 13pt 0, clip]{resultImage/Final-accuracy-result-with-numbers-on-bars.png}
+    \includegraphics[width=0.98\linewidth, trim=0 0 13pt 0, clip]{resultImage/Final-accuracy-result-with-numbers-on-bars.png}
     \caption{Word-level POS tagging result on the test set.}
     \label{fig:word-result}
 \end{figure}
@@ -282,19 +377,32 @@ This allows the model to assign non-zero emission probabilities to unseen words.
 However, OOV words are still difficult because the model has no direct training
 evidence for their most likely tags.
 
+The 5,050 OOV tokens are counted at test time by checking normalized words
+against the 45,153-word training vocabulary. The remaining 227,127 test tokens
+are known to the model. Therefore, the OOV analysis measures vocabulary coverage
+rather than a separate test subset, and the OOV and known counts together equal
+the total number of evaluated words.
+
+For an unseen word, every tag receives its tag-specific smoothed OOV emission
+probability. The decoder must then rely more heavily on the initial probability
+and surrounding transition patterns because no observed word--tag count
+identifies the word directly. Smoothing keeps decoding possible, but it does not
+use spelling, prefixes, suffixes, or other morphological cues that might
+separate likely nouns, verbs, and adjectives.
+
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.72\linewidth, trim=0 0 13pt 0, clip]{resultImage/OOV-analysis-result-with-numbers-on-bars.png}
+    \includegraphics[width=0.98\linewidth, trim=0 0 13pt 0, clip]{resultImage/OOV-analysis-result-with-numbers-on-bars.png}
     \caption{OOV word analysis on the test set.}
     \label{fig:oov-analysis}
 \end{figure}
 
-\begin{figure}[H]
+\begin{figure*}[t]
     \centering
-    \includegraphics[width=0.78\linewidth]{resultImage/Top-10-mistake-types-with-numbers-on-bars.png}
+    \includegraphics[width=0.78\textwidth]{resultImage/Top-10-mistake-types-with-numbers-on-bars.png}
     \caption{Top 10 POS tagging mistake types.}
     \label{fig:top-mistakes}
-\end{figure}
+\end{figure*}
 
 \section{Error Analysis}
 
@@ -307,11 +415,19 @@ or a verb.
 Table~\ref{tab:error-examples} shows selected failed examples from the test
 sentences.
 
-\begin{table}[H]
+The aggregate mistake chart in Figure~\ref{fig:top-mistakes} shows that errors
+are not evenly distributed. The largest direction is VERB predicted as NOUN
+(1,337 cases), followed by NOUN predicted as DET (1,113) and NOUN predicted as
+ADJ (986). Direction matters: NOUN predicted as VERB has 637 cases and is a
+different error category from VERB predicted as NOUN. Together, the ten displayed
+categories contain 7,730 of the 14,400 wrong predictions, so a substantial
+remainder is spread across less frequent confusion types.
+
+\begin{table*}[t]
     \centering
     \caption{Error Analysis Examples}
     \label{tab:error-examples}
-    \small
+    \footnotesize
     \begin{tabular}{p{0.40\textwidth}p{0.14\textwidth}p{0.14\textwidth}p{0.20\textwidth}}
         \toprule
         \textbf{Sentence} & \textbf{Word} & \textbf{True Tag} & \textbf{Predicted Tag} \\
@@ -330,7 +446,7 @@ sentences.
         & as & ADP & ADV \\
         \bottomrule
     \end{tabular}
-\end{table}
+\end{table*}
 
 The HMM uses the first-order Markov assumption. This means that the current tag
 mainly depends on the previous tag, not on the full meaning of the sentence.
@@ -344,6 +460,13 @@ preventing zero probabilities, but it cannot fully replace real evidence from
 training data. Therefore, OOV words can still receive incorrect tags, especially
 when they appear in unusual contexts.
 
+The examples also illustrate why a single wrong decision can affect nearby
+positions. Viterbi chooses a complete path, and a locally attractive transition
+can change the best continuation for later words. Consequently, the rows in
+Table~\ref{tab:error-examples} should be read as outcomes of sequence decoding,
+not as independent word classifications. The table is illustrative; the overall
+counts and top mistake types summarize the complete test set.
+
 \section{Conclusion}
 
 This project implemented a POS tagger using a Hidden Markov Model trained on the
@@ -355,11 +478,27 @@ Viterbi algorithm was implemented in log-space to decode the most likely POS tag
 sequence while avoiding computational underflow.
 
 The final result shows that the HMM POS tagger achieved 93.8\% accuracy on the
-test set. This is a strong result for a simple statistical model built from
-scratch. The main weaknesses are related to ambiguous words, limited context from
-the first-order Markov assumption, and rare or unseen words. Future improvements
-could include using richer word features, suffix information, higher-order tag
-dependencies, or modern neural sequence models.
+test set, corresponding to 217,777 correct predictions among 232,177 words. The
+result demonstrates that initial-tag tendencies, adjacent-tag transitions, and
+word emissions capture enough regularity to label most tokens correctly. Because
+the score is computed on the held-out 20\% split, it evaluates generalization to
+sentences that did not provide the training counts.
+
+The analysis also identifies clear boundaries of the approach. The test set
+contains 5,050 OOV tokens, for which the model has no word-specific training
+count, and the most frequent mistakes involve confusions among common grammatical
+categories. The first-order state assumption represents only the previous tag,
+while the emission model uses a normalized word identity without morphological
+or semantic features. These design choices explain why smoothing prevents
+failure on unseen input but cannot resolve every ambiguous use.
+
+Future improvements should be evaluated with the same fixed split so that their
+effect can be compared directly with this baseline. Candidate extensions include
+suffix or other word-form features for unknown words, higher-order tag
+dependencies for broader local context, and neural sequence models that learn
+contextual representations. Such extensions add complexity, so the current HMM
+remains useful as a transparent reference model whose probabilities, decoding
+steps, and error counts can be inspected directly.
 
 \begin{thebibliography}{9}
 
